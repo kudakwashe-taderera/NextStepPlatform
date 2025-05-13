@@ -1,0 +1,106 @@
+Please upgrade and complete the NeXTStep platform based on the attached updated full system specification.
+
+⚠️ The current version generated is incomplete and deviates from spec.
+
+---
+
+🛠️ Technologies that MUST be used:
+
+- **Frontend**: React + Vite + TypeScript (NOT JavaScript) + Tailwind CSS + Zustand + React Router DOM + TanStack Query + Chart.js + Framer Motion
+- **Backend**: Python + Django + Django REST Framework + PostgreSQL + JWT Authentication (`djangorestframework-simplejwt`) + Swagger (`drf-yasg`)
+- **Other Tools**: Celery, Redis, Django Admin, Cloudinary/S3, GitHub Actions, Railway/Render, i18n-ready
+
+---
+
+🧠 DO NOT use `.jsx`. Regenerate any `.jsx` components as `.tsx` and enforce strict typing. Refactor `Dashboard.tsx` and related files into scalable folders using the format:
+
+- `/dashboard/[role]/page.tsx`
+- `/course/[id]/modules/page.tsx`
+- `/auth/login/page.tsx`
+- `/jobs/[jobId]/page.tsx`
+
+All pages must follow the `page.tsx` folder structure for future maintainability.
+
+---
+
+🎯 Upgrade and complete the following missing parts:
+
+✅ Dynamic LMS:
+- Course pages should follow `/course/[id]/` format
+- Tabs for Home, Modules, Assignments, Discussions, Grades, Certificates
+- Models: Course, Module, Lesson, Assignment, Submission, Grade, ZoomSession
+
+✅ Career Guidance System:
+- Support for O/A Level subject input → Suggested Programs and Career Paths
+- Include CareerQuiz model + UI + Recommendations
+
+✅ Job Portal:
+- Resume upload logic (backend + Cloudinary or S3)
+- JobApplication model
+- Fit score logic (based on user profile + completed courses)
+- Saved jobs, public job search
+
+✅ Messaging System:
+- Models + UI for group and direct chat
+- Inbox page, real-time-ready placeholder
+
+✅ Notifications System:
+- Backend logic for announcements, submission alerts, and match updates
+- Notifications dropdown in frontend linked to DB
+
+✅ Certificates:
+- Model, QR code logic, generation process via Celery
+- PDF export linked to UIN
+- Stored in user profile
+
+✅ Cross-University Enrollment:
+- Dynamic program and course enrollment
+- Credit transfer request model and approval logic
+
+✅ Group Projects:
+- Group + Milestone models
+- Submission tracking per group
+- Role-based group actions
+
+✅ Role-Based Dashboards:
+- Redirect user after login based on role
+- Dashboard views must be isolated: o-level, a-level, university, lecturer, employer, ministry, etc.
+
+✅ Admin & Superuser Features:
+- AdminLog model for audit trails
+- Django Admin panel customized for approvals, reporting
+- National-level analytics: heatmaps, enrollment stats, outcome trends
+
+✅ AI Readiness:
+- Add placeholder endpoints for OpenAI or Ollama integration
+- Pages like “Ask AI for Career Advice” and “Smart Job Fit”
+
+✅ Saved Items:
+- Allow users to save jobs, careers, and courses
+- UI and DB model
+
+✅ Permissions:
+- Restrict each route, API view, and dashboard based on role
+- Use DRF permissions and frontend route guards
+
+✅ UIN Tracking:
+- Login via email or UIN
+- Show UIN on profile and embed in generated assets (e.g. certificates)
+
+✅ Internationalization Ready:
+- i18n directory for language strings
+- Modular language setup
+
+✅ Clean Layout:
+- Reusable layout components per role (`StudentLayout`, `LecturerLayout`, `AdminLayout`, etc.)
+- Persistent Sidebar, TopNav, Notification dropdown
+
+✅ Fix all incomplete scaffolding:
+- Replace stubbed files with real content from the attached spec
+- Do not use generic boilerplate or ignore requirements
+
+---
+
+📎 ATTACHED FILE: `Nextstep Updated Spec`
+
+This is the final phase. Generate all code files, models, and structure to match the spec exactly.
