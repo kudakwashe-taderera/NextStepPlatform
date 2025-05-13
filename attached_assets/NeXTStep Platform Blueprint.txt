@@ -1,0 +1,375 @@
+Title: NeXTStep Platform — Full Technical & Functional Specification
+
+Overview:
+NeXTStep is a full-scale national education, career, and employment platform designed for Zimbabwe, South Africa, and broader regions. It combines:
+
+* A Canvas-style Learning Management System (LMS)
+* A Career Guidance System linked to subjects and programs
+* A Job Portal for internships, part-time, graduate jobs
+* An Extra Learning Hub integrating Coursera, YouTube, and LinkedIn Learning
+
+The platform enables personalized journeys for every user role, cross-university operations, dynamic routing, certificate generation, UIN-based tracking, AI-enhanced recommendations, and administrative oversight at institution and national levels.
+
+---
+
+Core Modules:
+
+1. **Learning Management System (LMS)**
+
+   * Courses grouped by semester
+   * LMS dashboard dynamically loads based on enrolled courses
+   * Tabs per course:
+
+     * Home, Modules, Files, Assignments, Discussions, Zoom, Grades, Certificates
+   * Course route: `/course/[id]/page.tsx`
+   * Tracks instructor info, course progress, quiz scores
+   * Certificates auto-generated on completion (UIN + details embedded)
+   * Group collaboration tools: file sharing, milestones, chat
+
+2. **Career Guidance System**
+
+   * ZIMSEC O Level and A Level subject input
+   * Suggests A Level subjects, programs, and careers
+   * Roadmap visualization: O Level → A Level → University → Career
+   * Career quiz for tertiary students with dynamic results
+   * Tracks interests and recommends personalized journeys
+
+3. **Job Portal**
+
+   * Job cards show matching % based on user's profile
+   * Resume upload + cover letter required for applications
+   * Roles: internships, graduate jobs, remote work
+   * Country filter (Zimbabwe, South Africa)
+   * Employer dashboard to post, filter, view applicants
+   * Application tracker: Applied, Reviewed, Shortlisted, Rejected, Hired
+
+4. **Extra Learning Hub**
+
+   * Skill tracks: "Become a Data Analyst", "Ace University"
+   * Platform filters: Coursera, YouTube, LinkedIn
+   * Manually track progress or integrate OAuth tracking later
+   * Tag-based filtering by skill (Python, Communication, AI)
+
+5. **Analytics Module**
+
+   * Per-role dashboards with charts
+   * For students: GPA trendline, readiness meter
+   * For admins: Enrollment rates, pass rates, job placement stats
+   * For ministry: national placement rate, heatmaps, insights
+
+---
+
+User Roles & Full Journey Flows:
+
+### 🧑‍🎓 O Level Student
+
+* Registers with name, email, school, phone, selects O Level subjects
+* UIN generated on account creation
+* Redirected to `/dashboard/o-level/page.tsx`
+* Default screen = Career Guidance:
+
+  * Recommended A Level subjects
+  * Suggested careers
+  * Linked programs
+* Sidebar contains:
+
+  * Career Guidance
+  * Job Portal
+  * Extra Learning
+  * Notifications
+* Can apply for entry-level internships if resume is uploaded
+
+### 🧑‍🎓 A Level Student
+
+* Registers with name, email, school, phone, selects A Level subjects (ZIMSEC or CAPS)
+* UIN generated
+* Redirected to `/dashboard/a-level/page.tsx`
+* Career Guidance tabbed view:
+
+  * Subjects → Programs
+  * Programs → Careers
+  * CTA: Apply for program, See career fit
+* Sidebar contains:
+
+  * Career Guidance
+  * University Application (up to 3)
+  * Job Portal
+  * Extra Learning
+  * Notifications
+
+### 🎓 Tertiary Student
+
+* Registers with name, email, university, program
+* Auto-enrolled in courses from program
+* UIN generated, redirected to `/dashboard/university/page.tsx`
+* LMS access enabled with Canvas-style UI:
+
+  * `/course/[id]/modules`, `/assignments`, `/grades`, etc.
+* Access to:
+
+  * Career Quiz
+  * Job Portal
+  * Extra Learning Hub
+  * Certificates
+  * Analytics Panel
+  * Cross-University Enrollment
+
+### 👨‍🏫 Lecturer
+
+* Registers with name, email, institution, specialization
+* Awaits admin approval
+* Upon approval → `/dashboard/lecturer/page.tsx`
+* Can:
+
+  * View/manage assigned courses
+  * Upload modules, create assignments, grade submissions
+  * Schedule Zoom sessions
+  * Moderate discussions
+  * Trigger certificate generation
+* Sidebar:
+
+  * My Courses
+  * Group Projects
+  * Certificate Center
+  * Announcements
+  * Notifications
+
+### 🧑‍🏫 Mentor
+
+* Registers with profile + interests
+* Approved by admin
+* Sees mentee requests
+* Can schedule 1-on-1 sessions, chat, and track student growth
+* Sidebar:
+
+  * Mentees
+  * Messaging
+  * Tools
+  * Notifications
+
+### 🧑‍💼 Employer
+
+* Registers company profile + verification docs
+* Waits for system approval
+* After approval → `/dashboard/employer/page.tsx`
+* Can:
+
+  * Post job listings
+  * View applicants (UIN-linked profiles + LMS performance)
+  * Shortlist, reject, message candidates
+* Sidebar:
+
+  * Post Job
+  * View Applicants
+  * Analytics
+  * Resume Bank
+  * Notifications
+
+### 🏫 Institution Admin
+
+* Assigned manually or promoted
+* Role for university/college-specific control
+* Dashboard:
+
+  * Staff/student approval
+  * Program management
+  * View reports
+* Sidebar:
+
+  * User Control
+  * Internal Reports
+  * Program Setup
+  * Messaging
+
+### 🧑‍⚖️ Ministry Admin
+
+* Assigned by superuser
+* Oversees cross-institution analytics
+* Dashboard:
+
+  * Skill Heatmaps
+  * Top Career Paths
+  * Placement Rates
+* Sidebar:
+
+  * Approval Logs
+  * Data Insights
+  * Report Exports
+  * Student Tracking (UIN-driven)
+
+### 🧑‍🔧 Superuser
+
+* Root role
+* Full access to all system logs, APIs, backup tools
+* Manages:
+
+  * Admin creation
+  * Role assignments
+  * Platform-wide announcements
+  * API keys, integrations, audit logs
+
+### 👤 General User
+
+* Registers with name, email, country, education history
+* Sees:
+
+  * Career Suggestions
+  * Courses to upskill
+  * Open jobs
+* Sidebar:
+
+  * Career Guidance
+  * Jobs
+  * Learning
+  * Notifications
+
+
+
+Authentication & Account Management:
+
+* Users register using email (and optionally phone)
+* UIN (Universal Identification Number) is auto-generated per user upon onboarding
+* JWT authentication is used (email or UIN login options supported)
+* Auth tokens and role are stored client-side via Zustand state management
+* Role-based redirects immediately after login (e.g., Lecturer → `/dashboard/lecturer`)
+
+---
+
+Frontend Routing & Structure:
+
+* React + Vite + TypeScript based frontend
+* Uses folder-based route organization (like Next.js App Router)
+* Each screen is in its own folder with `page.tsx`:
+
+  * `/auth/login/page.tsx`
+  * `/auth/register/page.tsx`
+  * `/dashboard/o-level/page.tsx`
+  * `/course/[id]/modules/page.tsx`
+  * `/jobs/[jobId]/page.tsx`
+* Shared layouts and components per role:
+
+  * `StudentLayout.tsx`, `LecturerLayout.tsx`, `EmployerLayout.tsx`, `AdminLayout.tsx`
+  * Includes persistent Sidebar, TopNav, Notifications dropdown
+* Role-based access control wrappers protect frontend routes
+
+---
+
+Backend Architecture (Django + DRF):
+
+* CustomUser model extends AbstractBaseUser with fields:
+
+  * id (UUID), email, password, role, UIN, full\_name, institution (nullable), etc.
+* DRF ViewSets per model
+* JWT (via `djangorestframework-simplejwt`)
+* Swagger docs via `drf-yasg`
+* Permissions classes to restrict access based on role:
+
+  * Example: `IsLecturer`, `IsStudent`, `IsAdmin`, etc.
+* UIN is used in:
+
+  * User tracking, certificate embedding, resume links, analytics
+
+---
+
+Database Models:
+
+* User
+* Subject, Program, University
+* Course, Module, Lesson, Assignment, Submission, Grade
+* CareerPath, Recommendation, CareerQuiz, QuizResult
+* Job, JobApplication, ResumeUpload
+* Certificate, ZoomSession, Discussion, Group, Milestone
+* Announcement, Message (Private + Group), SavedItem
+* AdminLog, InstitutionApproval, SystemSetting
+
+---
+
+System-Wide Features:
+
+* Notifications:
+
+  * Stored in DB, rendered via dropdown in TopNav
+  * Types: Submission alerts, new job match, message alerts, system updates
+* Messaging:
+
+  * Group and direct chat (Lecturer → Group, Student ↔ Mentor)
+  * Inbox, Read/Unread status, timestamps
+* Certificates:
+
+  * Auto-generated PDFs with QR verification (UIN embedded)
+  * Stored in user profile
+* Resume Bank:
+
+  * Searchable by employers
+  * Filter by GPA, university, skills
+* Credit Transfers:
+
+  * Students can apply from dashboard
+  * Admins approve, log recorded
+* Saved Items:
+
+  * Courses, Jobs, Careers can be bookmarked per user
+* Public Career/Job Search:
+
+  * Without login
+  * Prompts for registration when attempting action
+
+---
+
+Analytics by Role:
+
+* Students: course progress, GPA, skills vs. career path
+* Lecturers: submission rates, group performance
+* Employers: best-fit scores, applicant metrics
+* Institution Admins: enrollment vs. program outcome
+* Ministry Admins: provincial heatmaps, national trends
+
+---
+
+AI & Smart Matching (Optional/Future):
+
+* Integrate OpenAI API or local Ollama model
+* Career suggestion: Based on subjects + interests
+* Job scoring: Based on course completion + resume
+* Skill gap detection: e.g., "Take this course to unlock X career"
+* AI Chat Assist:
+
+  * Ask about subjects, careers, eligibility, recommendations
+
+---
+
+Deployment & Tools:
+
+* Hosting:
+
+  * Frontend: Vercel or Netlify
+  * Backend: Railway or Render
+* Database: PostgreSQL (preferably managed)
+* File Storage:
+
+  * Cloudinary or AWS S3 for resumes, certificates, files
+* CI/CD:
+
+  * GitHub Actions (automatic deploy on push to main)
+* Task Queues:
+
+  * Celery + Redis for background jobs (certificate gen, reminders)
+* Admin Panel:
+
+  * Django Admin with custom views for superuser and ministry staff
+
+---
+
+Internationalization & Future Readiness:
+
+* i18n support: Modular language file system ready (future-ready)
+* Timetable support: Academic calendar integration for LMS
+* Modular plugin architecture: Add support for grade scalers, plugins per institution
+* Audit Logging: Full history of approvals, changes, and actions
+
+---
+
+Conclusion:
+NeXTStep is a comprehensive, role-based, scalable platform combining learning, career navigation, job access, and government oversight in one seamless ecosystem. It is designed to be modular, dynamic, analytics-ready, and ready to serve as the backbone of national education-to-career pipelines across regions.
+
+This blueprint is production-grade and intended for use by Engineer Kudash to scaffold and build the platform exactly as specified.
