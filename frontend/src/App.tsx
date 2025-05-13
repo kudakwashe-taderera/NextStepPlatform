@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'react-hot-toast';
@@ -7,7 +7,9 @@ import { Toaster } from 'react-hot-toast';
 // Pages
 import HomePage from './pages/HomePage';
 import NotFoundPage from './pages/NotFoundPage';
-import AuthPage from './pages/AuthPage';
+import AuthPage from './pages/auth/page';
+import LoginPage from './pages/auth/login/page';
+import RegisterPage from './pages/auth/register/page';
 import OLevelDashboardPage from './pages/dashboard/o-level/page';
 import ALevelDashboardPage from './pages/dashboard/a-level/page';
 import UniversityDashboardPage from './pages/dashboard/university/page';
@@ -37,11 +39,14 @@ const App: React.FC = () => {
         <Router>
           <Routes>
             {/* Public Routes */}
+            <Route path="/" element={<Navigate to="/auth" />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/auth/login" element={<LoginPage />} />
+            <Route path="/auth/register" element={<RegisterPage />} />
 
             {/* Protected Routes */}
             <Route
-              path="/"
+              path="/home"
               element={
                 <ProtectedRoute>
                   <HomePage />
