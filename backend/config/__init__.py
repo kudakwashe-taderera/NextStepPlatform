@@ -1,0 +1,1 @@
+# NeXTStep platform configuration package

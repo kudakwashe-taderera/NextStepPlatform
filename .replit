@@ -1,0 +1,32 @@
+modules = ["python-3.11", "nodejs-20"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Django Backend"
+
+[[workflows.workflow]]
+name = "Django Backend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && pip install -r requirements.txt || pip install django djangorestframework djangorestframework-simplejwt django-cors-headers drf-yasg psycopg2-binary && python manage.py runserver 0.0.0.0:5000"
+waitForPort = 5000
+
+[deployment]
+run = ["sh", "-c", "cd backend && pip install -r requirements.txt || pip install django djangorestframework djangorestframework-simplejwt django-cors-headers drf-yasg psycopg2-binary && python manage.py runserver 0.0.0.0:5000"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
