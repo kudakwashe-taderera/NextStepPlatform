@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button.tsx';
 import { UserRole } from '@/types';
 import { validateForm } from '@/lib/utils';
 import { 
+  BookOpen, 
   GraduationCap, 
   Briefcase, 
   User,
   Users,
   UserCog,
-  BookOpen,
+  ChevronRight,
   MailIcon,
   LockIcon,
   UserIcon,
@@ -19,21 +20,23 @@ import {
   School
 } from 'lucide-react';
 
-interface RegisterFormData {
+// Type for form data
+interface AuthFormData {
   email: string;
   password: string;
-  confirmPassword: string;
-  fullName: string;
-  phone: string;
-  institution: string;
+  confirmPassword?: string;
+  fullName?: string;
+  phone?: string;
+  institution?: string;
   role: UserRole;
-  [key: string]: string | UserRole;
+  [key: string]: string | UserRole | undefined;
 }
 
-const RegisterPage: React.FC = () => {
+const AuthPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, registerMutation } = useAuth();
-  const [formData, setFormData] = useState<RegisterFormData>({
+  const { user, loginMutation, registerMutation } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState<AuthFormData>({
     email: '',
     password: '',
     confirmPassword: '',
@@ -45,38 +48,35 @@ const RegisterPage: React.FC = () => {
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedLevel, setSelectedLevel] = useState<'o-level' | 'a-level' | 'university'>('o-level');
-  const [step, setStep] = useState<1 | 2>(1);
 
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      redirectBasedOnRole();
+      redirectBasedOnRole(user.role);
     }
   }, [user]);
 
-  const redirectBasedOnRole = () => {
-    if (!user) return;
-    
-    switch (user.role) {
-      case 'STUDENT':
-        if (user.studentLevel === 'O_LEVEL') {
+  const redirectBasedOnRole = (role: UserRole) => {
+    switch (role) {
+      case UserRole.STUDENT:
+        if (user?.studentLevel === 'O_LEVEL') {
           navigate('/dashboard/o-level');
-        } else if (user.studentLevel === 'A_LEVEL') {
+        } else if (user?.studentLevel === 'A_LEVEL') {
           navigate('/dashboard/a-level');
         } else {
           navigate('/dashboard/university');
         }
         break;
-      case 'LECTURER':
+      case UserRole.LECTURER:
         navigate('/dashboard/lecturer');
         break;
-      case 'EMPLOYER':
+      case UserRole.EMPLOYER:
         navigate('/employer/dashboard');
         break;
-      case 'MENTOR':
+      case UserRole.MENTOR:
         navigate('/dashboard/mentor');
         break;
-      case 'ADMIN':
+      case UserRole.ADMIN:
         navigate('/dashboard/admin');
         break;
       default:
@@ -101,18 +101,20 @@ const RegisterPage: React.FC = () => {
     }
   };
 
-  const validateFirstStep = () => {
+  const validateLoginForm = () => {
     const rules = {
       email: { required: true, email: true },
-      password: { required: true, minLength: 6 },
-      confirmPassword: { required: true, match: 'password' },
+      password: { required: true, minLength: 6 }
     };
     
     return validateForm(formData, rules);
   };
 
-  const validateSecondStep = () => {
+  const validateRegisterForm = () => {
     const rules = {
+      email: { required: true, email: true },
+      password: { required: true, minLength: 6 },
+      confirmPassword: { required: true, match: 'password' },
       fullName: { required: true },
       phone: { required: true },
       institution: { required: formData.role !== UserRole.EMPLOYER }
@@ -121,40 +123,41 @@ const RegisterPage: React.FC = () => {
     return validateForm(formData, rules);
   };
 
-  const handleNextStep = () => {
-    const validationResult = validateFirstStep();
-    
-    if (!validationResult.isValid) {
-      setErrors(validationResult.errors);
-      return;
-    }
-    
-    setStep(2);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validationResult = validateSecondStep();
+    let validationResult;
+    
+    if (isLogin) {
+      validationResult = validateLoginForm();
+    } else {
+      validationResult = validateRegisterForm();
+    }
     
     if (!validationResult.isValid) {
       setErrors(validationResult.errors);
       return;
     }
     
-    const registerData = {
-      username: formData.email,
-      email: formData.email,
-      password: formData.password,
-      password_confirm: formData.confirmPassword,
-      full_name: formData.fullName,
-      phone: formData.phone,
-      institution: formData.institution,
-      role: formData.role,
-      student_level: formData.role === UserRole.STUDENT ? selectedLevel.toUpperCase() : undefined,
-    };
-    
-    registerMutation.mutate(registerData);
+    if (isLogin) {
+      loginMutation.mutate({
+        username: formData.email,
+        password: formData.password,
+      });
+    } else {
+      const registerData = {
+        username: formData.email,
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.fullName || '',
+        phone: formData.phone || '',
+        institution: formData.institution || '',
+        role: formData.role,
+        student_level: formData.role === UserRole.STUDENT ? selectedLevel.toUpperCase() : undefined,
+      };
+      
+      registerMutation.mutate(registerData);
+    }
   };
 
   const getRoleIcon = (role: UserRole) => {
@@ -176,96 +179,81 @@ const RegisterPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
-      {/* Left side - Register Form */}
+      {/* Left side - Auth Form */}
       <div className="w-full md:w-1/2 p-6 md:p-10 flex justify-center items-center">
         <div className="w-full max-w-md">
           <div className="text-center mb-10">
             <h1 className="text-3xl font-bold text-gray-900">
-              Join NeXTStep
+              {isLogin ? 'Welcome Back to' : 'Join'} NeXTStep
             </h1>
             <p className="mt-2 text-gray-600">
-              Create your account to access personalized education and career resources
+              {isLogin 
+                ? 'Your gateway to education, career guidance, and job opportunities' 
+                : 'Create your account to access personalized education and career resources'}
             </p>
           </div>
           
           <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Create Account</h2>
-              <Link to="/auth/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                Already have an account?
-              </Link>
+            <div className="flex border-b mb-6">
+              <button
+                className={`pb-4 px-2 ${isLogin ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-500'}`}
+                onClick={() => setIsLogin(true)}
+              >
+                Login
+              </button>
+              <button
+                className={`pb-4 px-2 ml-8 ${!isLogin ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-500'}`}
+                onClick={() => setIsLogin(false)}
+              >
+                Register
+              </button>
             </div>
             
-            {/* Step indicator */}
-            <div className="relative mb-8">
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-between">
-                <div className={`flex items-center ${step >= 1 ? 'text-blue-600' : 'text-gray-500'}`}>
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    step >= 1 ? 'bg-blue-600 text-white' : 'border border-gray-300 bg-white'
-                  }`}>
-                    1
-                  </span>
-                  <span className="ml-2 text-sm font-medium">Account</span>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <MailIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    className={`pl-10 block w-full rounded-md border ${errors.email ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
                 </div>
-                <div className={`flex items-center ${step >= 2 ? 'text-blue-600' : 'text-gray-500'}`}>
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    step >= 2 ? 'bg-blue-600 text-white' : 'border border-gray-300 bg-white'
-                  }`}>
-                    2
-                  </span>
-                  <span className="ml-2 text-sm font-medium">Profile</span>
-                </div>
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
               </div>
-            </div>
-            
-            <form onSubmit={step === 1 ? (e => { e.preventDefault(); handleNextStep(); }) : handleSubmit} className="space-y-5">
-              {step === 1 ? (
+              
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LockIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    className={`pl-10 block w-full rounded-md border ${errors.password ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                </div>
+                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+              </div>
+              
+              {!isLogin && (
                 <>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <MailIcon className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        className={`pl-10 block w-full rounded-md border ${errors.email ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        placeholder="you@example.com"
-                        value={formData.email}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <LockIcon className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        className={`pl-10 block w-full rounded-md border ${errors.password ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        placeholder="••••••••"
-                        value={formData.password}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-                  </div>
-                  
                   <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       Confirm Password
@@ -286,9 +274,7 @@ const RegisterPage: React.FC = () => {
                     </div>
                     {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
                   </div>
-                </>
-              ) : (
-                <>
+                  
                   <div>
                     <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
                       Full Name
@@ -421,38 +407,40 @@ const RegisterPage: React.FC = () => {
                 </>
               )}
               
-              <div className="flex justify-between pt-4">
-                {step === 2 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                  >
-                    Back
-                  </Button>
-                )}
-                
+              {isLogin && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center">
+                    <input
+                      id="remember-me"
+                      name="remember-me"
+                      type="checkbox"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                      Remember me
+                    </label>
+                  </div>
+                  <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                    Forgot password?
+                  </a>
+                </div>
+              )}
+              
+              <div>
                 <Button
                   type="submit"
-                  className={`${step === 1 ? 'w-full' : 'w-auto'} flex justify-center py-2 px-4`}
-                  disabled={registerMutation.isPending}
+                  className="w-full flex justify-center py-2 px-4"
+                  disabled={loginMutation.isLoading || registerMutation.isLoading}
                 >
-                  {registerMutation.isPending ? (
+                  {loginMutation.isLoading || registerMutation.isLoading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   ) : (
-                    step === 1 ? 'Continue' : 'Create Account'
+                    <>
+                      {isLogin ? 'Sign In' : 'Create Account'}
+                    </>
                   )}
                 </Button>
               </div>
-              
-              {step === 1 && (
-                <div className="mt-4 text-center text-sm text-gray-600">
-                  By continuing, you agree to our 
-                  <a href="#" className="text-blue-600 hover:text-blue-500"> Terms of Service </a> 
-                  and 
-                  <a href="#" className="text-blue-600 hover:text-blue-500"> Privacy Policy</a>
-                </div>
-              )}
             </form>
           </div>
         </div>
@@ -514,4 +502,4 @@ const RegisterPage: React.FC = () => {
   );
 };
 
-export default RegisterPage;
+export default AuthPage;
