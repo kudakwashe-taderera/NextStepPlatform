@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import MainLayout from '@/components/layout/MainLayout';
 import { UserRole } from '@/types';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button.tsx';
 
 const OLevelDashboardPage: React.FC = () => {
   const { user } = useAuth();

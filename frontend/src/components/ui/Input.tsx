@@ -1,54 +1,101 @@
 import React, { InputHTMLAttributes, forwardRef } from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+const inputVariants = cva(
+  'flex w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
+  {
+    variants: {
+      variant: {
+        default: 'border-gray-300 focus:border-blue-500',
+        error: 'border-red-300 focus:border-red-500 focus:ring-red-500',
+      },
+      size: {
+        default: 'h-10',
+        sm: 'h-8 text-xs',
+        lg: 'h-12 text-base',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
+
+export interface InputProps
+  extends InputHTMLAttributes<HTMLInputElement>,
+    VariantProps<typeof inputVariants> {
   error?: string;
-  labelClassName?: string;
-  inputClassName?: string;
+  label?: string;
+  helperText?: string;
+  startIcon?: React.ReactNode;
+  endIcon?: React.ReactNode;
+  containerClassName?: string;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ 
-    className, 
-    label, 
-    error, 
-    labelClassName, 
-    inputClassName,
-    id, 
-    name, 
-    required, 
-    ...props 
-  }, ref) => {
-    // Generate an ID if none is provided
-    const inputId = id || name || `input-${Math.random().toString(36).substring(2, 9)}`;
-    
+  (
+    {
+      className,
+      variant,
+      size,
+      error,
+      label,
+      helperText,
+      startIcon,
+      endIcon,
+      containerClassName,
+      ...props
+    },
+    ref
+  ) => {
     return (
-      <div className={cn('mb-4', className)}>
+      <div className={cn('w-full space-y-1', containerClassName)}>
         {label && (
           <label
-            htmlFor={inputId}
-            className={cn(
-              'block text-gray-700 text-sm font-bold mb-2',
-              labelClassName
-            )}
+            htmlFor={props.id}
+            className="block text-sm font-medium text-gray-700"
           >
-            {label} {required && <span className="text-red-500">*</span>}
+            {label}
           </label>
         )}
-        <input
-          ref={ref}
-          id={inputId}
-          name={name}
-          required={required}
-          className={cn(
-            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors',
-            error ? 'border-red-500' : 'border-gray-300',
-            inputClassName
+
+        <div className="relative">
+          {startIcon && (
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              {startIcon}
+            </div>
           )}
-          {...props}
-        />
-        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+
+          <input
+            className={cn(
+              inputVariants({ variant: error ? 'error' : variant, size }),
+              startIcon && 'pl-10',
+              endIcon && 'pr-10',
+              className
+            )}
+            ref={ref}
+            {...props}
+          />
+
+          {endIcon && (
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              {endIcon}
+            </div>
+          )}
+        </div>
+
+        {(error || helperText) && (
+          <p
+            className={cn(
+              'text-xs',
+              error ? 'text-red-500' : 'text-gray-500'
+            )}
+          >
+            {error || helperText}
+          </p>
+        )}
       </div>
     );
   }
@@ -56,4 +103,4 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
 Input.displayName = 'Input';
 
-export { Input };
+export { Input, inputVariants };

@@ -1,16 +1,16 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { ApiResponse, ValidationRule, ValidationRules, ValidationResult } from "@/types";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { ApiResponse, ValidationRule, ValidationRules, ValidationResult } from '@/types';
 
 /**
- * Combine class names with Tailwind CSS
+ * Combines multiple class names and Tailwind CSS classes together without conflicts
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Format a date to a string
+ * Formats a date to a readable string
  */
 export function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -22,97 +22,143 @@ export function formatDate(date: Date | string): string {
 }
 
 /**
- * Helper function to format API errors into a readable format
+ * Truncates a string to a specified length
  */
-export function formatApiErrors(
-  error: string | Record<string, string | string[]> | undefined
-): string {
-  if (!error) return "An unknown error occurred";
-  
-  if (typeof error === 'string') {
-    return error;
-  }
-  
-  if (typeof error === 'object') {
-    // If it's a nested object with field names as keys
-    return Object.entries(error)
-      .map(([field, message]) => {
-        const fieldName = field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ');
-        const errorMsg = Array.isArray(message) ? message.join(', ') : message;
-        return `${fieldName}: ${errorMsg}`;
-      })
-      .join('; ');
-  }
-  
-  return 'An unknown error occurred';
+export function truncateString(str: string, length: number): string {
+  if (str.length <= length) return str;
+  return str.slice(0, length) + '...';
 }
 
 /**
- * A simple form validation helper
+ * Converts a file size in bytes to a human-readable string
  */
-export function validateForm(fields: Record<string, any>, rules: ValidationRules): ValidationResult {
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * Generates a random ID
+ */
+export function generateId(length: number = 8): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+/**
+ * Create a debounced function
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout>;
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Format a number to a currency string
+ */
+export function formatCurrency(value: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(value);
+}
+
+/**
+ * Create a throttled function
+ */
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean;
+  return function executedFunction(...args: Parameters<T>) {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
+
+/**
+ * Validate a form based on validation rules
+ */
+export function validateForm(
+  data: Record<string, any>,
+  rules: ValidationRules
+): ValidationResult {
   const errors: Record<string, string> = {};
-  let isValid = true;
   
-  Object.entries(rules).forEach(([fieldName, fieldRules]) => {
-    const value = fields[fieldName];
+  // Check each field against its rules
+  Object.entries(rules).forEach(([field, rule]) => {
+    // Skip validation if the field doesn't exist in the data
+    if (!(field in data)) return;
     
-    // Required check
-    if (fieldRules.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
-      errors[fieldName] = `${fieldName.replace('_', ' ')} is required`;
-      isValid = false;
-      return;
+    const value = data[field];
+    
+    // Required field
+    if (rule.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
+      errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')} is required`;
+      return; // Skip other validations for this field
     }
     
-    if (value) {
-      // Minimum length check
-      if (fieldRules.minLength && typeof value === 'string' && value.length < fieldRules.minLength) {
-        errors[fieldName] = `${fieldName.replace('_', ' ')} must be at least ${fieldRules.minLength} characters`;
-        isValid = false;
-        return;
+    // Min length
+    if (rule.minLength && typeof value === 'string' && value.length < rule.minLength) {
+      errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')} must be at least ${rule.minLength} characters`;
+    }
+    
+    // Max length
+    if (rule.maxLength && typeof value === 'string' && value.length > rule.maxLength) {
+      errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')} must be less than ${rule.maxLength} characters`;
+    }
+    
+    // Email validation
+    if (rule.isEmail && typeof value === 'string' && value.trim() !== '') {
+      const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
+      if (!emailRegex.test(value)) {
+        errors[field] = 'Please enter a valid email address';
       }
-      
-      // Maximum length check
-      if (fieldRules.maxLength && typeof value === 'string' && value.length > fieldRules.maxLength) {
-        errors[fieldName] = `${fieldName.replace('_', ' ')} must be at most ${fieldRules.maxLength} characters`;
-        isValid = false;
-        return;
+    }
+    
+    // Pattern matching
+    if (rule.pattern && typeof value === 'string' && value.trim() !== '') {
+      if (!rule.pattern.test(value)) {
+        errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')} is not in the correct format`;
       }
-      
-      // Email format check
-      if (fieldRules.isEmail && typeof value === 'string') {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) {
-          errors[fieldName] = 'Please enter a valid email address';
-          isValid = false;
-          return;
-        }
+    }
+    
+    // Matches another field
+    if (rule.matches && typeof value === 'string' && value.trim() !== '') {
+      if (data[rule.matches] !== value) {
+        errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')} must match ${rule.matches.replace('_', ' ')}`;
       }
-      
-      // Pattern check
-      if (fieldRules.pattern && typeof value === 'string') {
-        if (!fieldRules.pattern.test(value)) {
-          errors[fieldName] = `${fieldName.replace('_', ' ')} is invalid`;
-          isValid = false;
-          return;
-        }
-      }
-      
-      // Password match check
-      if (fieldRules.matches && fields[fieldRules.matches] !== value) {
-        errors[fieldName] = `${fieldName.replace('_', ' ')} does not match ${fieldRules.matches.replace('_', ' ')}`;
-        isValid = false;
-        return;
-      }
-      
-      // Custom validation
-      if (fieldRules.custom && !fieldRules.custom(value)) {
-        errors[fieldName] = `${fieldName.replace('_', ' ')} is invalid`;
-        isValid = false;
-        return;
-      }
+    }
+    
+    // Custom validation
+    if (rule.custom && !rule.custom(value)) {
+      errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')} is invalid`;
     }
   });
   
-  return { isValid, errors };
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors
+  };
 }

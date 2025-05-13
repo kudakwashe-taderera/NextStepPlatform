@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import MainLayout from '@/components/layout/MainLayout';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button.tsx';
 
 const UniversityDashboardPage: React.FC = () => {
   const { user } = useAuth();

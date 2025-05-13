@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
+import { Input } from '@/components/ui/Input.tsx';
+import { Button } from '@/components/ui/Button.tsx';
+import { Select } from '@/components/ui/Select.tsx';
 import { UserRole } from '@/types';
 import { validateForm } from '@/lib/utils';
 

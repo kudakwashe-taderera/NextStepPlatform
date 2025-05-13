@@ -6,8 +6,15 @@ import { Toaster } from 'react-hot-toast';
 
 // Pages
 import HomePage from './pages/HomePage';
-import AuthPage from './pages/AuthPage';
 import NotFoundPage from './pages/NotFoundPage';
+import AuthPage from './pages/AuthPage';
+import OLevelDashboardPage from './pages/dashboard/o-level/page';
+import ALevelDashboardPage from './pages/dashboard/a-level/page';
+import UniversityDashboardPage from './pages/dashboard/university/page';
+import EmployerDashboardPage from './pages/employer/dashboard/page';
+import JobManagementPage from './pages/job-management/page';
+import CreateJobPage from './pages/job-management/create/page';
+import JobDetailPage from './pages/job-management/[id]/page';
 
 // Auth Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -42,12 +49,40 @@ const App: React.FC = () => {
               }
             />
 
+            {/* Dashboard Routes */}
+            <Route
+              path="/dashboard/o-level"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                  <OLevelDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/dashboard/a-level"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                  <ALevelDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/dashboard/university"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                  <UniversityDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Role-specific routes */}
             <Route
               path="/courses/*"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.STUDENT, UserRole.LECTURER]}>
-                  {/* Nested routes will be added later */}
+                  <div>Courses - To be implemented</div>
                 </ProtectedRoute>
               }
             />
@@ -56,7 +91,7 @@ const App: React.FC = () => {
               path="/careers/*"
               element={
                 <ProtectedRoute>
-                  {/* Career paths and recommendations - to be implemented */}
+                  <div>Career paths and recommendations - To be implemented</div>
                 </ProtectedRoute>
               }
             />
@@ -65,7 +100,7 @@ const App: React.FC = () => {
               path="/jobs/*"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.STUDENT, UserRole.EMPLOYER]}>
-                  {/* Job listings and applications - to be implemented */}
+                  <div>Job listings and applications - To be implemented</div>
                 </ProtectedRoute>
               }
             />
@@ -74,7 +109,7 @@ const App: React.FC = () => {
               path="/learning/*"
               element={
                 <ProtectedRoute>
-                  {/* Learning resources - to be implemented */}
+                  <div>Learning resources - To be implemented</div>
                 </ProtectedRoute>
               }
             />
@@ -84,7 +119,7 @@ const App: React.FC = () => {
               path="/users/*"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-                  {/* User management - to be implemented */}
+                  <div>User management - To be implemented</div>
                 </ProtectedRoute>
               }
             />
@@ -93,7 +128,7 @@ const App: React.FC = () => {
               path="/settings/*"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-                  {/* System settings - to be implemented */}
+                  <div>System settings - To be implemented</div>
                 </ProtectedRoute>
               }
             />
@@ -103,17 +138,44 @@ const App: React.FC = () => {
               path="/course-management/*"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.LECTURER]}>
-                  {/* Course management - to be implemented */}
+                  <div>Course management - To be implemented</div>
                 </ProtectedRoute>
               }
             />
 
             {/* Employer Routes */}
             <Route
-              path="/job-management/*"
+              path="/employer/dashboard"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]}>
-                  {/* Job management - to be implemented */}
+                  <EmployerDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/job-management"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]}>
+                  <JobManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/job-management/create"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]}>
+                  <CreateJobPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/job-management/:id"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]}>
+                  <JobDetailPage />
                 </ProtectedRoute>
               }
             />
@@ -122,7 +184,34 @@ const App: React.FC = () => {
               path="/applications/*"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]}>
-                  {/* Application management - to be implemented */}
+                  <div>Application management - To be implemented</div>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/employer/candidates"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]}>
+                  <div>Candidates management - To be implemented</div>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/employer/messages"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]}>
+                  <div>Employer messages - To be implemented</div>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/employer/settings"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]}>
+                  <div>Employer settings - To be implemented</div>
                 </ProtectedRoute>
               }
             />
@@ -132,7 +221,7 @@ const App: React.FC = () => {
               path="/mentees/*"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.MENTOR]}>
-                  {/* Mentee management - to be implemented */}
+                  <div>Mentee management - To be implemented</div>
                 </ProtectedRoute>
               }
             />
@@ -141,7 +230,7 @@ const App: React.FC = () => {
               path="/resources/*"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.MENTOR]}>
-                  {/* Mentor resources - to be implemented */}
+                  <div>Mentor resources - To be implemented</div>
                 </ProtectedRoute>
               }
             />
