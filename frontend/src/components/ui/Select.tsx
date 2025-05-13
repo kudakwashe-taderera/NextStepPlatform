@@ -1,48 +1,80 @@
 import React, { SelectHTMLAttributes, forwardRef } from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 export interface SelectOption {
   value: string;
   label: string;
 }
 
-export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   options: SelectOption[];
   label?: string;
   error?: string;
-  fullWidth?: boolean;
+  labelClassName?: string;
+  selectClassName?: string;
+  placeholder?: string;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, options, label, error, fullWidth = true, ...props }, ref) => {
+  ({
+    className,
+    label,
+    error,
+    labelClassName,
+    selectClassName,
+    id,
+    name,
+    required,
+    options,
+    placeholder = 'Select an option',
+    ...props
+  }, ref) => {
+    // Generate an ID if none is provided
+    const selectId = id || name || `select-${Math.random().toString(36).substring(2, 9)}`;
+
     return (
-      <div className={cn('mb-4', fullWidth && 'w-full')}>
+      <div className={cn('mb-4', className)}>
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
+          <label
+            htmlFor={selectId}
+            className={cn(
+              'block text-gray-700 text-sm font-bold mb-2',
+              labelClassName
+            )}
+          >
+            {label} {required && <span className="text-red-500">*</span>}
           </label>
         )}
         <select
-          className={cn(
-            'form-input rounded-md shadow-sm',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
-            className
-          )}
           ref={ref}
+          id={selectId}
+          name={name}
+          required={required}
+          className={cn(
+            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors',
+            error ? 'border-red-500' : 'border-gray-300',
+            selectClassName
+          )}
           {...props}
         >
-          <option value="">Select an option</option>
+          {placeholder && (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          )}
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </select>
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       </div>
     );
   }
 );
+
 Select.displayName = 'Select';
 
 export { Select };

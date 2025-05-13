@@ -1,80 +1,118 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { ApiResponse, ValidationRule, ValidationRules, ValidationResult } from "@/types";
 
 /**
- * Combines multiple class names and Tailwind classes safely
- * Uses clsx for conditional class merging and tailwind-merge to resolve conflicts
+ * Combine class names with Tailwind CSS
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Formats a date string to a human-readable format
+ * Format a date to a string
  */
-export function formatDate(dateString: string): string {
-  if (!dateString) return '';
-  
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
+export function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(date);
+  });
 }
 
 /**
- * Truncates text to a specified length with an ellipsis
+ * Helper function to format API errors into a readable format
  */
-export function truncateText(text: string, maxLength: number): string {
-  if (!text) return '';
-  if (text.length <= maxLength) return text;
+export function formatApiErrors(
+  error: string | Record<string, string | string[]> | undefined
+): string {
+  if (!error) return "An unknown error occurred";
   
-  return text.substring(0, maxLength) + '...';
-}
-
-/**
- * Gets initials from a full name
- */
-export function getInitials(name: string): string {
-  if (!name) return '';
-  
-  const parts = name.split(' ');
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-}
-
-/**
- * Formats a percentage value
- */
-export function formatPercentage(value: number): string {
-  return `${Math.round(value)}%`;
-}
-
-/**
- * Generates a random color based on a string (useful for avatars)
- */
-export function stringToColor(str: string): string {
-  if (!str) return '#6366F1'; // Default indigo color
-  
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  if (typeof error === 'string') {
+    return error;
   }
   
-  const hue = Math.abs(hash % 360);
-  return `hsl(${hue}, 70%, 70%)`;
+  if (typeof error === 'object') {
+    // If it's a nested object with field names as keys
+    return Object.entries(error)
+      .map(([field, message]) => {
+        const fieldName = field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ');
+        const errorMsg = Array.isArray(message) ? message.join(', ') : message;
+        return `${fieldName}: ${errorMsg}`;
+      })
+      .join('; ');
+  }
+  
+  return 'An unknown error occurred';
 }
 
 /**
- * Formats a file size in bytes to a human-readable format
+ * A simple form validation helper
  */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+export function validateForm(fields: Record<string, any>, rules: ValidationRules): ValidationResult {
+  const errors: Record<string, string> = {};
+  let isValid = true;
   
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  Object.entries(rules).forEach(([fieldName, fieldRules]) => {
+    const value = fields[fieldName];
+    
+    // Required check
+    if (fieldRules.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
+      errors[fieldName] = `${fieldName.replace('_', ' ')} is required`;
+      isValid = false;
+      return;
+    }
+    
+    if (value) {
+      // Minimum length check
+      if (fieldRules.minLength && typeof value === 'string' && value.length < fieldRules.minLength) {
+        errors[fieldName] = `${fieldName.replace('_', ' ')} must be at least ${fieldRules.minLength} characters`;
+        isValid = false;
+        return;
+      }
+      
+      // Maximum length check
+      if (fieldRules.maxLength && typeof value === 'string' && value.length > fieldRules.maxLength) {
+        errors[fieldName] = `${fieldName.replace('_', ' ')} must be at most ${fieldRules.maxLength} characters`;
+        isValid = false;
+        return;
+      }
+      
+      // Email format check
+      if (fieldRules.isEmail && typeof value === 'string') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+          errors[fieldName] = 'Please enter a valid email address';
+          isValid = false;
+          return;
+        }
+      }
+      
+      // Pattern check
+      if (fieldRules.pattern && typeof value === 'string') {
+        if (!fieldRules.pattern.test(value)) {
+          errors[fieldName] = `${fieldName.replace('_', ' ')} is invalid`;
+          isValid = false;
+          return;
+        }
+      }
+      
+      // Password match check
+      if (fieldRules.matches && fields[fieldRules.matches] !== value) {
+        errors[fieldName] = `${fieldName.replace('_', ' ')} does not match ${fieldRules.matches.replace('_', ' ')}`;
+        isValid = false;
+        return;
+      }
+      
+      // Custom validation
+      if (fieldRules.custom && !fieldRules.custom(value)) {
+        errors[fieldName] = `${fieldName.replace('_', ' ')} is invalid`;
+        isValid = false;
+        return;
+      }
+    }
+  });
   
-  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`;
+  return { isValid, errors };
 }
