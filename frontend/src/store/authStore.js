@@ -1,19 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-// Define user roles as constants
-export const USER_ROLES = {
-  O_LEVEL_STUDENT: 'O_LEVEL',
-  A_LEVEL_STUDENT: 'A_LEVEL',
-  TERTIARY_STUDENT: 'TERTIARY',
-  LECTURER: 'LECTURER',
-  MENTOR: 'MENTOR',
-  EMPLOYER: 'EMPLOYER',
-  INSTITUTION_ADMIN: 'INST_ADMIN',
-  MINISTRY_ADMIN: 'MIN_ADMIN',
-  SUPERUSER: 'SUPERUSER',
-  GENERAL_USER: 'GENERAL',
-};
+import axios from 'axios';
 
 export const useAuthStore = create(
   persist(
@@ -21,57 +8,115 @@ export const useAuthStore = create(
       user: null,
       token: null,
       refreshToken: null,
-
-      // Set authentication data after login/register
-      setAuth: (user, token, refreshToken) => 
-        set({ user, token, refreshToken }),
-
-      // Clear authentication data on logout
-      clearAuth: () => 
-        set({ user: null, token: null, refreshToken: null }),
-
-      // Update user data
-      updateUser: (userData) => 
-        set((state) => ({
-          user: state.user ? { ...state.user, ...userData } : null
-        })),
-
+      
+      // Login
+      login: async (email, password) => {
+        try {
+          const response = await axios.post('/api/auth/login/', { email, password });
+          
+          if (response.data && response.data.access) {
+            set({ 
+              user: response.data.user,
+              token: response.data.access,
+              refreshToken: response.data.refresh
+            });
+            
+            // Set the token in axios default headers
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+            
+            return { success: true };
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          return { 
+            success: false, 
+            message: error.response?.data?.detail || 'Login failed. Please try again.' 
+          };
+        }
+      },
+      
+      // Register
+      register: async (userData) => {
+        try {
+          const response = await axios.post('/api/auth/register/', userData);
+          
+          if (response.data && response.data.access) {
+            set({ 
+              user: response.data.user,
+              token: response.data.access,
+              refreshToken: response.data.refresh
+            });
+            
+            // Set the token in axios default headers
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+            
+            return { success: true };
+          }
+        } catch (error) {
+          console.error('Registration error:', error);
+          return { 
+            success: false, 
+            message: error.response?.data || 'Registration failed. Please try again.' 
+          };
+        }
+      },
+      
+      // Logout
+      logout: async () => {
+        try {
+          // Call logout API if needed
+          if (get().refreshToken) {
+            await axios.post('/api/auth/logout/', { refresh: get().refreshToken });
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
+        } finally {
+          // Remove token from axios headers
+          delete axios.defaults.headers.common['Authorization'];
+          
+          // Clear state
+          set({ user: null, token: null, refreshToken: null });
+        }
+      },
+      
       // Check if user is authenticated
       isAuthenticated: () => {
-        const state = get();
-        return !!state.token && !!state.user;
+        return !!get().token && !!get().user;
       },
-
-      // Check if user has specific role
-      hasRole: (role) => {
-        const state = get();
-        if (!state.user) return false;
-        if (Array.isArray(role)) {
-          return role.includes(state.user.role);
+      
+      // Refresh token
+      refreshAuthToken: async () => {
+        const currentRefreshToken = get().refreshToken;
+        
+        if (!currentRefreshToken) return false;
+        
+        try {
+          const response = await axios.post('/api/auth/token/refresh/', { refresh: currentRefreshToken });
+          
+          if (response.data && response.data.access) {
+            set({ 
+              token: response.data.access,
+              refreshToken: response.data.refresh || currentRefreshToken
+            });
+            
+            // Update the token in axios default headers
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+            
+            return true;
+          }
+        } catch (error) {
+          console.error('Token refresh error:', error);
+          
+          // If refresh fails, log out the user
+          get().logout();
+          
+          return false;
         }
-        return state.user.role === role;
       },
-
-      // Check if user is student (any level)
-      isStudent: () => {
-        const state = get();
-        if (!state.user) return false;
-        return [
-          USER_ROLES.O_LEVEL_STUDENT,
-          USER_ROLES.A_LEVEL_STUDENT,
-          USER_ROLES.TERTIARY_STUDENT
-        ].includes(state.user.role);
-      },
-
-      // Check if user is admin (any level)
-      isAdmin: () => {
-        const state = get();
-        if (!state.user) return false;
-        return [
-          USER_ROLES.INSTITUTION_ADMIN,
-          USER_ROLES.MINISTRY_ADMIN, 
-          USER_ROLES.SUPERUSER
-        ].includes(state.user.role);
+      
+      // Update user profile
+      updateUser: (userData) => {
+        set({ user: { ...get().user, ...userData } });
       }
     }),
     {
