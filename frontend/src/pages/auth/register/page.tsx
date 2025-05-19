@@ -1,82 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/Button.tsx';
-import { UserRole } from '@/types';
-import { validateForm } from '@/lib/utils';
-import { 
-  GraduationCap, 
-  Briefcase, 
+import { RegisterForm } from '@/components/auth/RegisterForm';
+import {
+  GraduationCap,
   User,
-  Users,
-  UserCog,
+  Briefcase,
   BookOpen,
-  MailIcon,
-  LockIcon,
-  UserIcon,
-  BuildingIcon,
-  PhoneIcon,
-  School
 } from 'lucide-react';
 
-interface RegisterFormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  fullName: string;
-  phone: string;
-  institution: string;
-  role: UserRole;
-  [key: string]: string | UserRole;
-}
+const Feature = ({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) => (
+  <div className="flex items-start">
+    <div className="flex-shrink-0 mt-1">{icon}</div>
+    <div className="ml-4">
+      <h3 className="text-lg font-medium">{title}</h3>
+      <p className="text-gray-200">{desc}</p>
+    </div>
+  </div>
+);
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, registerMutation } = useAuth();
-  const [formData, setFormData] = useState<RegisterFormData>({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    phone: '',
-    institution: '',
-    role: UserRole.STUDENT,
-  });
-  
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedLevel, setSelectedLevel] = useState<'o-level' | 'a-level' | 'university'>('o-level');
-  const [step, setStep] = useState<1 | 2>(1);
+  const { user } = useAuth();
 
-  // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      redirectBasedOnRole();
-    }
+    if (user) redirectBasedOnRole();
   }, [user]);
 
   const redirectBasedOnRole = () => {
     if (!user) return;
-    
+
     switch (user.role) {
-      case 'STUDENT':
-        if (user.studentLevel === 'O_LEVEL') {
-          navigate('/dashboard/o-level');
-        } else if (user.studentLevel === 'A_LEVEL') {
-          navigate('/dashboard/a-level');
-        } else {
-          navigate('/dashboard/university');
-        }
+      case 'O_LEVEL':
+        navigate('/dashboard/o-level');
+        break;
+      case 'A_LEVEL':
+        navigate('/dashboard/a-level');
+        break;
+      case 'TERTIARY':
+        navigate('/dashboard/university');
         break;
       case 'LECTURER':
         navigate('/dashboard/lecturer');
         break;
-      case 'EMPLOYER':
-        navigate('/employer/dashboard');
-        break;
       case 'MENTOR':
         navigate('/dashboard/mentor');
         break;
-      case 'ADMIN':
+      case 'EMPLOYER':
+        navigate('/employer/dashboard');
+        break;
+      case 'INST_ADMIN':
+      case 'MIN_ADMIN':
+      case 'SUPERUSER':
         navigate('/dashboard/admin');
         break;
       default:
@@ -84,429 +59,60 @@ const RegisterPage: React.FC = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  const validateFirstStep = () => {
-    const rules = {
-      email: { required: true, email: true },
-      password: { required: true, minLength: 6 },
-      confirmPassword: { required: true, match: 'password' },
-    };
-    
-    return validateForm(formData, rules);
-  };
-
-  const validateSecondStep = () => {
-    const rules = {
-      fullName: { required: true },
-      phone: { required: true },
-      institution: { required: formData.role !== UserRole.EMPLOYER }
-    };
-    
-    return validateForm(formData, rules);
-  };
-
-  const handleNextStep = () => {
-    const validationResult = validateFirstStep();
-    
-    if (!validationResult.isValid) {
-      setErrors(validationResult.errors);
-      return;
-    }
-    
-    setStep(2);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const validationResult = validateSecondStep();
-    
-    if (!validationResult.isValid) {
-      setErrors(validationResult.errors);
-      return;
-    }
-    
-    const registerData = {
-      username: formData.email,
-      email: formData.email,
-      password: formData.password,
-      password_confirm: formData.confirmPassword,
-      full_name: formData.fullName,
-      phone: formData.phone,
-      institution: formData.institution,
-      role: formData.role,
-      student_level: formData.role === UserRole.STUDENT ? selectedLevel.toUpperCase() : undefined,
-    };
-    
-    registerMutation.mutate(registerData);
-  };
-
-  const getRoleIcon = (role: UserRole) => {
-    switch (role) {
-      case UserRole.STUDENT:
-        return <GraduationCap className="h-5 w-5" />;
-      case UserRole.LECTURER:
-        return <BookOpen className="h-5 w-5" />;
-      case UserRole.EMPLOYER:
-        return <Briefcase className="h-5 w-5" />;
-      case UserRole.MENTOR:
-        return <Users className="h-5 w-5" />;
-      case UserRole.ADMIN:
-        return <UserCog className="h-5 w-5" />;
-      default:
-        return <User className="h-5 w-5" />;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-indigo-50 via-white to-blue-100 dark:from-gray-900 dark:to-gray-800 transition duration-500">
       {/* Left side - Register Form */}
-      <div className="w-full md:w-1/2 p-6 md:p-10 flex justify-center items-center">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Join NeXTStep
+      <div className="w-full md:w-1/2 flex justify-center items-center p-6 md:p-12">
+        <div className="w-full max-w-md bg-white/80 dark:bg-white/10 backdrop-blur-lg border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl px-10 py-12 space-y-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight">
+              Create your <span className="text-[#13294B]">NeXTStep</span> account
             </h1>
-            <p className="mt-2 text-gray-600">
-              Create your account to access personalized education and career resources
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+              Access learning, career, and job opportunities in one place
             </p>
           </div>
-          
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Create Account</h2>
-              <Link to="/auth/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                Already have an account?
-              </Link>
-            </div>
-            
-            {/* Step indicator */}
-            <div className="relative mb-8">
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-between">
-                <div className={`flex items-center ${step >= 1 ? 'text-blue-600' : 'text-gray-500'}`}>
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    step >= 1 ? 'bg-blue-600 text-white' : 'border border-gray-300 bg-white'
-                  }`}>
-                    1
-                  </span>
-                  <span className="ml-2 text-sm font-medium">Account</span>
-                </div>
-                <div className={`flex items-center ${step >= 2 ? 'text-blue-600' : 'text-gray-500'}`}>
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    step >= 2 ? 'bg-blue-600 text-white' : 'border border-gray-300 bg-white'
-                  }`}>
-                    2
-                  </span>
-                  <span className="ml-2 text-sm font-medium">Profile</span>
-                </div>
-              </div>
-            </div>
-            
-            <form onSubmit={step === 1 ? (e => { e.preventDefault(); handleNextStep(); }) : handleSubmit} className="space-y-5">
-              {step === 1 ? (
-                <>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <MailIcon className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        className={`pl-10 block w-full rounded-md border ${errors.email ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        placeholder="you@example.com"
-                        value={formData.email}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <LockIcon className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        className={`pl-10 block w-full rounded-md border ${errors.password ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        placeholder="••••••••"
-                        value={formData.password}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <LockIcon className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="password"
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        className={`pl-10 block w-full rounded-md border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        placeholder="••••••••"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <UserIcon className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        id="fullName"
-                        name="fullName"
-                        className={`pl-10 block w-full rounded-md border ${errors.fullName ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        placeholder="John Doe"
-                        value={formData.fullName}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <PhoneIcon className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        className={`pl-10 block w-full rounded-md border ${errors.phone ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        placeholder="+1234567890"
-                        value={formData.phone}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                      I am a
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {Object.values(UserRole).map(role => (
-                        <div
-                          key={role}
-                          className={`flex items-center p-3 rounded-md cursor-pointer border ${
-                            formData.role === role 
-                              ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setFormData(prev => ({ ...prev, role }))}
-                        >
-                          {getRoleIcon(role)}
-                          <span className="ml-2 text-sm font-medium">{role}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {formData.role === UserRole.STUDENT && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Education Level
-                      </label>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div
-                          className={`flex items-center justify-center p-2 rounded-md cursor-pointer border text-sm font-medium ${
-                            selectedLevel === 'o-level' 
-                              ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setSelectedLevel('o-level')}
-                        >
-                          O-Level
-                        </div>
-                        <div
-                          className={`flex items-center justify-center p-2 rounded-md cursor-pointer border text-sm font-medium ${
-                            selectedLevel === 'a-level' 
-                              ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setSelectedLevel('a-level')}
-                        >
-                          A-Level
-                        </div>
-                        <div
-                          className={`flex items-center justify-center p-2 rounded-md cursor-pointer border text-sm font-medium ${
-                            selectedLevel === 'university' 
-                              ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setSelectedLevel('university')}
-                        >
-                          University
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.role !== UserRole.EMPLOYER && (
-                    <div>
-                      <label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-1">
-                        {formData.role === UserRole.STUDENT ? 'School/University' : 'Institution'}
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          {formData.role === UserRole.STUDENT ? 
-                            <School className="h-5 w-5 text-gray-400" /> : 
-                            <BuildingIcon className="h-5 w-5 text-gray-400" />
-                          }
-                        </div>
-                        <input
-                          type="text"
-                          id="institution"
-                          name="institution"
-                          className={`pl-10 block w-full rounded-md border ${errors.institution ? 'border-red-500' : 'border-gray-300'} shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                          placeholder={formData.role === UserRole.STUDENT ? "School or University name" : "Institution name"}
-                          value={formData.institution}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      {errors.institution && <p className="mt-1 text-sm text-red-600">{errors.institution}</p>}
-                    </div>
-                  )}
-                </>
-              )}
-              
-              <div className="flex justify-between pt-4">
-                {step === 2 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                  >
-                    Back
-                  </Button>
-                )}
-                
-                <Button
-                  type="submit"
-                  className={`${step === 1 ? 'w-full' : 'w-auto'} flex justify-center py-2 px-4`}
-                  disabled={registerMutation.isPending}
-                >
-                  {registerMutation.isPending ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    step === 1 ? 'Continue' : 'Create Account'
-                  )}
-                </Button>
-              </div>
-              
-              {step === 1 && (
-                <div className="mt-4 text-center text-sm text-gray-600">
-                  By continuing, you agree to our 
-                  <a href="#" className="text-blue-600 hover:text-blue-500"> Terms of Service </a> 
-                  and 
-                  <a href="#" className="text-blue-600 hover:text-blue-500"> Privacy Policy</a>
-                </div>
-              )}
-            </form>
-          </div>
+
+          {/* ✅ Redirects to login after successful registration */}
+          <RegisterForm onSuccess={() => navigate('/auth/login')} />
+
+          <p className="text-center text-sm text-gray-700 dark:text-gray-300">
+            Already have an account?{' '}
+            <Link to="/auth/login" className="text-[#FF5F05] hover:underline font-semibold">
+              Sign in here
+            </Link>
+          </p>
         </div>
       </div>
-      
+
       {/* Right side - Hero section */}
-      <div className="w-full md:w-1/2 bg-gradient-to-r from-blue-600 to-indigo-700 p-12 hidden md:flex flex-col justify-center">
-        <div className="max-w-md mx-auto text-white">
-          <h2 className="text-3xl font-bold mb-6">Your All-In-One Education and Career Platform</h2>
-          <p className="text-gray-100 mb-8">
-            NeXTStep helps you navigate from education to career with personalized guidance, 
-            learning resources, and job opportunities tailored to your unique journey.
+      <div className="w-full md:w-1/2 hidden md:flex items-center justify-center bg-gradient-to-br from-blue-700 to-indigo-800 text-white p-12">
+        <div className="max-w-md">
+          <h2 className="text-4xl font-bold mb-4">Africa's Digital Learning Backbone</h2>
+          <p className="text-lg mb-6">
+            NeXTStep connects your education, career goals, and job opportunities in one powerful platform designed for African excellence.
           </p>
-          
           <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mt-1">
-                <GraduationCap className="h-6 w-6 text-blue-300" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium">Learning Management System</h3>
-                <p className="text-gray-200">Access courses, assignments, and earn certificates</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mt-1">
-                <User className="h-6 w-6 text-blue-300" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium">Career Guidance</h3>
-                <p className="text-gray-200">Get personalized recommendations based on your profile</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mt-1">
-                <Briefcase className="h-6 w-6 text-blue-300" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium">Job Portal</h3>
-                <p className="text-gray-200">Find internships and jobs matched to your skills</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <div className="flex-shrink-0 mt-1">
-                <BookOpen className="h-6 w-6 text-blue-300" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium">Learning Hub</h3>
-                <p className="text-gray-200">Discover curated resources from top platforms</p>
-              </div>
-            </div>
+            <Feature
+              icon={<GraduationCap className="h-6 w-6 text-blue-300" />}
+              title="Learning Management System"
+              desc="Access courses, assignments, and earn certificates"
+            />
+            <Feature
+              icon={<User className="h-6 w-6 text-blue-300" />}
+              title="Career Guidance"
+              desc="Get personalized recommendations based on your profile"
+            />
+            <Feature
+              icon={<Briefcase className="h-6 w-6 text-blue-300" />}
+              title="Job Portal"
+              desc="Find internships and jobs matched to your skills"
+            />
+            <Feature
+              icon={<BookOpen className="h-6 w-6 text-blue-300" />}
+              title="Learning Hub"
+              desc="Discover curated resources from top platforms"
+            />
           </div>
         </div>
       </div>

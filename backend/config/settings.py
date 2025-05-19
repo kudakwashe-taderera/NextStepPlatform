@@ -82,6 +82,11 @@ DATABASES = {
 # Custom user model
 AUTH_USER_MODEL = 'core.CustomUser'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {

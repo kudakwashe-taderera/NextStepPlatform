@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { UserRole } from '../types';
 
@@ -10,8 +10,9 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles = [] }) => {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
 
-  // If authentication is still loading, show loading state
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -20,47 +21,34 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     );
   }
 
-  // If user is not authenticated, redirect to login
+
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  // If there are allowed roles specified and user's role is not included, redirect to appropriate dashboard
+ 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role as UserRole)) {
-    // Get the appropriate route based on user's role
-    let redirectTo = '/';
-    switch (user.role) {
-      case UserRole.O_LEVEL_STUDENT:
-        redirectTo = '/dashboard/o-level';
-        break;
-      case UserRole.A_LEVEL_STUDENT:
-        redirectTo = '/dashboard/a-level';
-        break;
-      case UserRole.TERTIARY_STUDENT:
-        redirectTo = '/dashboard/university';
-        break;
-      case UserRole.LECTURER:
-        redirectTo = '/dashboard/lecturer';
-        break;
-      case UserRole.MENTOR:
-        redirectTo = '/dashboard/mentor';
-        break;
-      case UserRole.EMPLOYER:
-        redirectTo = '/dashboard/employer';
-        break;
-      case UserRole.INSTITUTION_ADMIN:
-      case UserRole.MINISTRY_ADMIN:
-      case UserRole.SUPERUSER:
-        redirectTo = '/dashboard/admin';
-        break;
-      case UserRole.GENERAL_USER:
-        redirectTo = '/dashboard/general';
-        break;
+    const redirectMap: Record<UserRole, string> = {
+      O_LEVEL: '/dashboard/o-level',
+      A_LEVEL: '/dashboard/a-level',
+      TERTIARY: '/dashboard/university',
+      LECTURER: '/dashboard/lecturer',
+      MENTOR: '/dashboard/mentor',
+      EMPLOYER: '/employer/dashboard',
+      INST_ADMIN: '/dashboard/admin',
+      MIN_ADMIN: '/dashboard/admin',
+      SUPERUSER: '/dashboard/admin',
+      GENERAL: '/dashboard/general',
+    };
+
+    const expectedPath = redirectMap[user.role as UserRole] || '/';
+
+    
+    if (location.pathname !== expectedPath) {
+      return <Navigate to={expectedPath} replace />;
     }
-    return <Navigate to={redirectTo} replace />;
   }
 
-  // If user is authenticated and has allowed role, render children
   return <>{children}</>;
 };
 

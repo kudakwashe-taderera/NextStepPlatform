@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const selectVariants = cva(
-  'flex h-10 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
+  'appearance-none flex h-10 w-full rounded-md border border-gray-300 bg-white dark:bg-white/10 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#13294B] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -41,42 +41,38 @@ export interface SelectProps
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
   (
-    { 
-      className, 
-      variant, 
-      size, 
-      options, 
-      error, 
-      label, 
-      helperText, 
-      containerClassName, 
-      ...props 
+    {
+      className,
+      variant,
+      size,
+      options,
+      error,
+      label,
+      helperText,
+      containerClassName,
+      ...props
     },
     ref
   ) => {
     return (
       <div className={cn('w-full space-y-1', containerClassName)}>
         {label && (
-          <label
-            htmlFor={props.id}
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor={props.id} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             {label}
           </label>
         )}
 
         <div className="relative">
           <select
-            className={cn(selectVariants({ variant: error ? 'error' : variant, size }), className)}
+            className={cn(
+              selectVariants({ variant: error ? 'error' : variant, size }),
+              className
+            )}
             ref={ref}
             {...props}
           >
             {options.map((option) => (
-              <option 
-                key={option.value} 
-                value={option.value} 
-                disabled={option.disabled}
-              >
+              <option key={option.value} value={option.value} disabled={option.disabled}>
                 {option.label}
               </option>
             ))}
@@ -100,12 +96,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         </div>
 
         {(error || helperText) && (
-          <p
-            className={cn(
-              'text-xs',
-              error ? 'text-red-500' : 'text-gray-500'
-            )}
-          >
+          <p className={cn('text-xs', error ? 'text-red-500' : 'text-gray-500')}>
             {error || helperText}
           </p>
         )}

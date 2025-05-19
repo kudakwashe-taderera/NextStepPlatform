@@ -31,6 +31,7 @@ export interface InputProps
   helperText?: string;
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
+  onEndIconClick?: () => void;
   containerClassName?: string;
 }
 
@@ -45,6 +46,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       helperText,
       startIcon,
       endIcon,
+      onEndIconClick,
       containerClassName,
       ...props
     },
@@ -80,7 +82,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           />
 
           {endIcon && (
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <div
+              className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+              onClick={onEndIconClick}
+            >
               {endIcon}
             </div>
           )}

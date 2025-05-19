@@ -17,16 +17,18 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegisterSerializer
 
     def post(self, request, *args, **kwargs):
+        print("Incoming register data:", request.data)
+
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
-            response_data = {
+            return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'user': UserSerializer(user).data
-            }
-            return Response(response_data, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_201_CREATED)
+        print(serializer.errors) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -35,21 +37,23 @@ class LoginView(APIView):
     serializer_class = LoginSerializer
 
     def post(self, request):
+        print("Incoming login data:", request.data)
+
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data['email']
-            password = serializer.validated_data['password']
-            user = authenticate(request, username=email, password=password)
-            
+            user = authenticate(
+                username=serializer.validated_data['email'],
+                password=serializer.validated_data['password']
+            )
             if user:
                 refresh = RefreshToken.for_user(user)
-                response_data = {
+                return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
                     'user': UserSerializer(user).data
-                }
-                return Response(response_data, status=status.HTTP_200_OK)
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+                }, status=status.HTTP_200_OK)
+            return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -59,9 +63,9 @@ class LogoutView(APIView):
             refresh_token = request.data.get('refresh')
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserView(APIView):

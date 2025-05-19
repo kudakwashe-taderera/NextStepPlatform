@@ -21,11 +21,16 @@ export interface User {
 }
 
 export enum UserRole {
-  STUDENT = 'STUDENT',
+  O_LEVEL_STUDENT = 'O_LEVEL',
+  A_LEVEL_STUDENT = 'A_LEVEL',
+  TERTIARY_STUDENT = 'TERTIARY',
   LECTURER = 'LECTURER',
-  ADMIN = 'ADMIN',
+  MENTOR = 'MENTOR',
   EMPLOYER = 'EMPLOYER',
-  MENTOR = 'MENTOR'
+  INSTITUTION_ADMIN = 'INST_ADMIN',
+  MINISTRY_ADMIN = 'MIN_ADMIN',
+  SUPERUSER = 'SUPERUSER',
+  GENERAL_USER = 'GENERAL',
 }
 
 export interface AuthTokens {
@@ -39,14 +44,20 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
+  full_name: string; 
   email: string;
-  username: string;
   password: string;
-  password_confirm: string;
-  full_name: string;
+  confirm_password: string; 
+  phone?: string;
   role: UserRole;
+  institution?: string;
+  school?: string;
+  university?: string;
+  program?: string;
+  company?: string;
+  specialization?: string;
+  bio?: string;
 }
-
 // Validation Types
 export interface ValidationRule {
   required?: boolean;

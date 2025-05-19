@@ -7,7 +7,6 @@ import { Toaster } from 'react-hot-toast';
 // Pages
 import HomePage from './pages/HomePage';
 import NotFoundPage from './pages/NotFoundPage';
-import AuthPage from './pages/auth/page';
 import LoginPage from './pages/auth/login/page';
 import RegisterPage from './pages/auth/register/page';
 import OLevelDashboardPage from './pages/dashboard/o-level/page';
@@ -19,7 +18,7 @@ import CreateJobPage from './pages/job-management/create/page';
 import JobDetailPage from './pages/job-management/[id]/page';
 
 // Auth Protected Route Component
-import ProtectedRoute from './components/auth/ProtectedRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 import { UserRole } from './types';
 
 // Create a client for React Query
@@ -40,7 +39,7 @@ const App: React.FC = () => {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Navigate to="/auth" />} />
-            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/auth" element={<Navigate to="/auth/login" />} />
             <Route path="/auth/login" element={<LoginPage />} />
             <Route path="/auth/register" element={<RegisterPage />} />
 
@@ -54,39 +53,39 @@ const App: React.FC = () => {
               }
             />
 
-            {/* Dashboard Routes */}
+           {/* Dashboard Routes */}
             <Route
               path="/dashboard/o-level"
               element={
-                <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                <ProtectedRoute allowedRoles={[UserRole.O_LEVEL_STUDENT]}>
                   <OLevelDashboardPage />
                 </ProtectedRoute>
               }
             />
-            
+
             <Route
               path="/dashboard/a-level"
               element={
-                <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                <ProtectedRoute allowedRoles={[UserRole.A_LEVEL_STUDENT]}>
                   <ALevelDashboardPage />
                 </ProtectedRoute>
               }
             />
-            
+
             <Route
               path="/dashboard/university"
               element={
-                <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                <ProtectedRoute allowedRoles={[UserRole.TERTIARY_STUDENT]}>
                   <UniversityDashboardPage />
                 </ProtectedRoute>
               }
             />
 
-            {/* Role-specific routes */}
+            {/* Role-Specific Routes */}
             <Route
               path="/courses/*"
               element={
-                <ProtectedRoute allowedRoles={[UserRole.STUDENT, UserRole.LECTURER]}>
+                <ProtectedRoute allowedRoles={[UserRole.O_LEVEL_STUDENT, UserRole.A_LEVEL_STUDENT, UserRole.TERTIARY_STUDENT, UserRole.LECTURER]}>
                   <div>Courses - To be implemented</div>
                 </ProtectedRoute>
               }
@@ -104,7 +103,7 @@ const App: React.FC = () => {
             <Route
               path="/jobs/*"
               element={
-                <ProtectedRoute allowedRoles={[UserRole.STUDENT, UserRole.EMPLOYER]}>
+                <ProtectedRoute allowedRoles={[UserRole.O_LEVEL_STUDENT, UserRole.A_LEVEL_STUDENT, UserRole.TERTIARY_STUDENT, UserRole.EMPLOYER]}>
                   <div>Job listings and applications - To be implemented</div>
                 </ProtectedRoute>
               }
@@ -123,7 +122,7 @@ const App: React.FC = () => {
             <Route
               path="/users/*"
               element={
-                <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+                <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN, UserRole.MINISTRY_ADMIN]}>
                   <div>User management - To be implemented</div>
                 </ProtectedRoute>
               }
@@ -132,7 +131,7 @@ const App: React.FC = () => {
             <Route
               path="/settings/*"
               element={
-                <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+                <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN, UserRole.MINISTRY_ADMIN]}>
                   <div>System settings - To be implemented</div>
                 </ProtectedRoute>
               }

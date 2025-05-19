@@ -1,6 +1,8 @@
+import { User, UserRole, RegisterData } from '../types';
+import api from '../lib/api';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, UserRole } from '../types';
+
 
 interface AuthState {
   user: User | null;
@@ -11,6 +13,7 @@ interface AuthState {
   updateUser: (userData: Partial<User>) => void;
   isAuthenticated: () => boolean;
   hasRole: (roles: UserRole[]) => boolean;
+  register: (data: RegisterData) => Promise<{ success: boolean; data?: User; message?: string }>; // Add this
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -19,32 +22,44 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       refreshToken: null,
-      
-      setAuth: (user, token, refreshToken) => 
+
+      setAuth: (user, token, refreshToken) =>
         set({ user, token, refreshToken }),
-      
-      clearAuth: () => 
+
+      clearAuth: () =>
         set({ user: null, token: null, refreshToken: null }),
-      
-      updateUser: (userData) => 
+
+      updateUser: (userData) =>
         set((state) => ({
-          user: state.user ? { ...state.user, ...userData } : null
+          user: state.user ? { ...state.user, ...userData } : null,
         })),
-      
+
       isAuthenticated: () => {
         const state = get();
         return !!state.token && !!state.user;
       },
-      
+
       hasRole: (roles) => {
         const state = get();
         if (!state.user) return false;
         return roles.includes(state.user.role as UserRole);
       },
+
+      register: async (data: RegisterData) => {
+        try {
+          const response = await api.post('/auth/register/', data);
+          return { success: true, data: response.data };
+        } catch (error: any) {
+          console.error('Error during registration:', error);
+          return {
+            success: false,
+            message: error.response?.data?.detail || 'Registration failed',
+          };
+        }
+      },
     }),
     {
       name: 'nextstep-auth',
-      // Only persist these keys
       partialize: (state) => ({
         token: state.token,
         refreshToken: state.refreshToken,
